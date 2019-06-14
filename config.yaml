@@ -1,0 +1,10 @@
+domain:
+aws:
+  access_key:
+  secret_access_key:
+  regions:
+    - us-east-1
+    - ap-northeast-2
+gcp:
+  project_id:
+  jwtpath:
