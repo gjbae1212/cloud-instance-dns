@@ -1,1 +1,7 @@
 .idea
+vendor
+test
+assets
+coverage.txt
+local_env.sh
+cloud-name-server
