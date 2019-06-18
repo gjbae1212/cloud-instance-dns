@@ -1,5 +1,6 @@
 domain: your-name-server-domain (eg) test.example.com .. and so on)
 port: tcp, udp open port number(default->53)
+email: your-email(responsible name)
 aws:
   enable: true or false
   access_key: your-aws-access-key

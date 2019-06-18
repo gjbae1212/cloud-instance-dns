@@ -2,13 +2,14 @@ package server
 
 import (
 	"fmt"
-	"github.com/logrusorgru/aurora"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/logrusorgru/aurora"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -24,14 +25,16 @@ const (
 
 const (
 	CacheName             = "CLOUD-NAME-SERVER"
+	UNKNOWN   CloudVendor = "UNKNOWN"
 	AWS       CloudVendor = "AWS"
 	GCP       CloudVendor = "GCP"
 )
 
 type Store struct {
-	cache   *sync.Map
-	awsconf *AwsConfig
-	gcpconf *GcpConfig
+	awsconf        *AwsConfig
+	gcpconf        *GcpConfig
+	cache          *sync.Map
+	cacheUpdatedAt time.Time
 }
 
 type Record struct {
@@ -141,7 +144,8 @@ func (s *Store) renewal() error {
 		}
 	}
 	s.cache.Store(CacheName, table)
-	log.Printf("[%s][%d] cache table %s\n", aurora.Yellow("update"), count, time.Now().String())
+	s.cacheUpdatedAt = time.Now()
+	log.Printf("%s[%d] cache table %s\n", aurora.Yellow("[update]"), count, time.Now().String())
 	return nil
 }
 
