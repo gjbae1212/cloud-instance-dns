@@ -1,10 +1,16 @@
-domain:
+domain: your-name-server-domain (eg) test.example.com .. and so on)
+port: tcp, udp open port number(default->53)
 aws:
-  access_key:
-  secret_access_key:
+  enable: true or false
+  access_key: your-aws-access-key
+  secret_access_key: your-aws-secret-access-key
   regions:
-    - us-east-1
-    - ap-northeast-2
+    - your-aws-region-1
+    - your-aws-region-2
 gcp:
-  project_id:
-  jwtpath:
+  enable: true or false
+  project_id: your-gcp-project-id
+  zones:
+    - your-gcp-zone-1
+    - your-gcp-zone-2
+  jwt: your-gcp-json-web-token-string
