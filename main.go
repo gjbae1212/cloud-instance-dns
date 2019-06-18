@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"path/filepath"
+
 	"log"
-	"gopkg.in/yaml.v2"
+
+	"github.com/gjbae1212/cloud-name-server/server"
 )
 
 var (
@@ -14,12 +16,14 @@ var (
 func main() {
 	flag.Parse()
 
-	config := make(map[interface{}]interface{})
-	bys, err := ioutil.ReadFile(*configPath)
+	yamlPath, err := filepath.Abs(*configPath)
 	if err != nil {
 		log.Panic(err)
 	}
-	if err = yaml.Unmarshal(bys, &config); err != nil {
+
+	s, err := server.NewServer(yamlPath)
+	if err != nil {
 		log.Panic(err)
 	}
+	s.Start()
 }
