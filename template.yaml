@@ -1,4 +1,4 @@
-domain: your-name-server-domain (eg) test.example.com .. and so on)
+domain: your-name-server-domain (eg) localhost, test.example.com .. and so on)
 nameserver: your-machine hostname or public domain<not ip>(default -> localhost or auto detect value. it should be a value that dns will resolve)
 port: tcp, udp open port number(default -> 53)
 email: your-email(responsible name)

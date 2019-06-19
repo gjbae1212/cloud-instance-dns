@@ -14,22 +14,23 @@ func TestParseConfig(t *testing.T) {
 	assert := assert.New(t)
 
 	tests := map[string]struct {
-		input     map[interface{}]interface{}
-		domain    string
-		port      string
-		awsConfig *AwsConfig
-		gcpConfig *GcpConfig
-		err       bool
+		input        map[interface{}]interface{}
+		commonConfig *CommonConfig
+		awsConfig    *AwsConfig
+		gcpConfig    *GcpConfig
+		err          bool
 	}{
 		"empty":       {input: nil, err: true},
 		"emptyDomain": {input: make(map[interface{}]interface{}), err: true},
 		"success": {input: map[interface{}]interface{}{
-			"domain": "localhost"}, err: false, domain: "localhost."},
+			"domain": "localhost"}, err: false, commonConfig: &CommonConfig{domain: "localhost."}},
 	}
 
 	for _, t := range tests {
-		do, _, _, _, _, ac, gc, err := ParseConfig(t.input)
-		assert.Equal(t.domain, do)
+		co, ac, gc, err := ParseConfig(t.input)
+		if co != nil {
+			assert.Equal(t.commonConfig.domain, co.domain)
+		}
 		assert.Equal(t.awsConfig, ac)
 		assert.Equal(t.gcpConfig, gc)
 		if t.err {
@@ -48,14 +49,14 @@ func TestParseConfig(t *testing.T) {
 		assert.NoError(err)
 
 		// both enable
-		do, na, po, rn, pr, ac, gc, err := ParseConfig(config)
+		co, ac, gc, err := ParseConfig(config)
 		assert.NoError(err)
-		assert.NotEqual("", do)
-		assert.NotEqual("", na)
-		assert.NotEqual("", po)
-		assert.NotEqual("", rn)
-		assert.True(strings.HasSuffix(do, "."))
-		assert.Equal(config["private"], pr)
+		assert.NotEqual("", co.domain)
+		assert.True(strings.HasSuffix(co.domain, "."))
+		assert.NotEqual("", co.nameserver)
+		assert.NotEqual("", co.port)
+		assert.NotEqual("", co.rname)
+		assert.Equal(config["private"], co.private)
 		assert.NotEmpty(ac)
 		assert.NotEmpty(gc)
 		assert.NotEqual(0, len(ac.clients))
@@ -65,18 +66,18 @@ func TestParseConfig(t *testing.T) {
 
 		// gcp enable off
 		config["gcp"].(map[interface{}]interface{})["enable"] = "false"
-		do, _, _, _, _, ac, gc, err = ParseConfig(config)
+		co, ac, gc, err = ParseConfig(config)
 		assert.NoError(err)
-		assert.NotEqual("", do)
+		assert.NotEqual("", co.domain)
 		assert.NotEmpty(ac)
 		assert.Empty(gc)
 
 		// aws enable off
 		config["gcp"].(map[interface{}]interface{})["enable"] = "true"
 		config["aws"].(map[interface{}]interface{})["enable"] = "false"
-		do, _, _, _, _, ac, gc, err = ParseConfig(config)
+		co, ac, gc, err = ParseConfig(config)
 		assert.NoError(err)
-		assert.NotEqual("", do)
+		assert.NotEqual("", co.domain)
 		assert.Empty(ac)
 		assert.NotEmpty(gc)
 	}

@@ -20,7 +20,7 @@ func TestNewStore(t *testing.T) {
 		assert.NoError(err)
 		yaml.Unmarshal(bys, &config)
 		assert.NoError(err)
-		_, _, _, _, _, awsconfig, gcpconfig, err := ParseConfig(config)
+		_, awsconfig, gcpconfig, err := ParseConfig(config)
 		assert.NoError(err)
 
 		store, err := NewStore(awsconfig, gcpconfig)
@@ -40,7 +40,7 @@ func TestStore_Lookup(t *testing.T) {
 		assert.NoError(err)
 		yaml.Unmarshal(bys, &config)
 		assert.NoError(err)
-		_, _, _, _, _, awsconfig, gcpconfig, err := ParseConfig(config)
+		_, awsconfig, gcpconfig, err := ParseConfig(config)
 		assert.NoError(err)
 
 		store, err := NewStore(awsconfig, gcpconfig)
@@ -86,7 +86,7 @@ func TestRecord_TTL(t *testing.T) {
 		assert.NoError(err)
 		yaml.Unmarshal(bys, &config)
 		assert.NoError(err)
-		_, _, _, _, _, awsconfig, gcpconfig, err := ParseConfig(config)
+		_, awsconfig, gcpconfig, err := ParseConfig(config)
 		assert.NoError(err)
 
 		store, err := NewStore(awsconfig, gcpconfig)
@@ -109,7 +109,7 @@ func BenchmarkStore_Lookup(b *testing.B) {
 		config := make(map[interface{}]interface{})
 		bys, _ := ioutil.ReadFile(yamlPath)
 		yaml.Unmarshal(bys, &config)
-		_, _, _, _, _, awsconfig, gcpconfig, _ := ParseConfig(config)
+		_, awsconfig, gcpconfig, _ := ParseConfig(config)
 		store, _ := NewStore(awsconfig, gcpconfig)
 		for i := 0; i < b.N; i++ {
 			store.Lookup(os.Getenv("TEST_AWS_1"))

@@ -20,32 +20,28 @@ type Server interface {
 }
 
 type server struct {
-	domain     string
-	port       string
-	rname      string
-	nameserver string
-	publicIP   string
-	private    bool
-	store      *Store
+	publicIP string
+	config   *CommonConfig
+	store    *Store
 }
 
 func (s *server) Start() {
-	udpServer := &dns.Server{Addr: ":" + s.port, Net: "udp"}
+	udpServer := &dns.Server{Addr: ":" + s.config.port, Net: "udp"}
 	go func() {
 		if err := udpServer.ListenAndServe(); err != nil {
 			log.Panic(err)
 		}
 	}()
-	tcpServer := &dns.Server{Addr: ":" + s.port, Net: "tcp"}
+	tcpServer := &dns.Server{Addr: ":" + s.config.port, Net: "tcp"}
 	mode := "PUBLIC-IP"
-	if s.private {
+	if s.config.private {
 		mode = "PRIVATE-IP"
 	}
 	log.Printf("%s listen(%s) nameserver(%s) domain(%s) Serving %s\n",
 		aurora.Green("[start]"),
-		aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.port)),
-		aurora.Yellow(s.nameserver),
-		aurora.Cyan(s.domain),
+		aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.config.port)),
+		aurora.Yellow(s.config.nameserver),
+		aurora.Cyan(s.config.domain),
 		aurora.Magenta(mode),
 	)
 	if err := tcpServer.ListenAndServe(); err != nil {
@@ -124,23 +120,23 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	for _, msg := range m.Question {
 		switch msg.Qtype {
 		case dns.TypeNS: // dns nameserver
-			if msg.Name == s.domain {
+			if msg.Name == s.config.domain {
 				m.Answer = append(m.Answer, s.ns())
 			}
 		case dns.TypeSOA: // dns info
-			if msg.Name == s.domain {
+			if msg.Name == s.config.domain {
 				m.Answer = append(m.Answer, s.soa())
 			}
 		case dns.TypeA: // ipv4
-			if strings.HasSuffix(msg.Name, s.domain) {
-				prefix := strings.TrimSpace(strings.TrimSuffix(msg.Name, "."+s.domain))
+			if strings.HasSuffix(msg.Name, s.config.domain) {
+				prefix := strings.TrimSpace(strings.TrimSuffix(msg.Name, "."+s.config.domain))
 				records, err := s.Lookup(prefix)
 				if err != nil {
 					log.Printf("[err] lookup %+v\n", err)
 				} else {
 					for _, record := range records {
 						ip := record.PublicIP
-						if s.private {
+						if s.config.private {
 							ip = record.PrivateIP
 						}
 						m.Answer = append(m.Answer, &dns.A{
@@ -168,16 +164,16 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 func (s *server) ns() *dns.NS {
 	return &dns.NS{
-		Hdr: dns.RR_Header{Name: s.domain, Rrtype: dns.TypeNS, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:  s.nameserver,
+		Hdr: dns.RR_Header{Name: s.config.domain, Rrtype: dns.TypeNS, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
+		Ns:  s.config.nameserver,
 	}
 }
 
 func (s *server) soa() *dns.SOA {
 	return &dns.SOA{
-		Hdr:     dns.RR_Header{Name: s.domain, Rrtype: dns.TypeSOA, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:      s.nameserver,
-		Mbox:    s.rname,
+		Hdr:     dns.RR_Header{Name: s.config.domain, Rrtype: dns.TypeSOA, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
+		Ns:      s.config.nameserver,
+		Mbox:    s.config.rname,
 		Serial:  uint32(s.store.cacheUpdatedAt.Unix()), // cache updatedAt
 		Refresh: uint32((6 * time.Hour) / time.Second),
 		Retry:   uint32((30 * time.Minute) / time.Second),
@@ -200,24 +196,55 @@ func NewServer(yamlPath string) (Server, error) {
 		return nil, err
 	}
 
-	domain, nameserver, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
+	// parse yaml
+	commonConfig, awsconfig, gcpconfig, err := ParseConfig(config)
 	if err != nil {
 		return nil, err
+	}
+
+	if commonConfig == nil {
+		return nil, fmt.Errorf("[err] required config missing")
 	}
 
 	if awsconfig == nil && gcpconfig == nil {
 		return nil, fmt.Errorf("[err] the aws or the gcp must be useful at least one")
 	}
 
+	// get machine public ip
 	publicIP, err := goip.GetPublicIPV4()
 	if err != nil {
 		log.Printf("%s not found machine public ip \n", aurora.Red("[fail]"))
 	}
 
-	// check NS Record
-	nsrecords, err := net.LookupNS(domain)
+	// generate dns table
+	store, err := NewStore(awsconfig, gcpconfig)
 	if err != nil {
-		log.Printf("%s %s not found NS Record %v\n", aurora.Red("[fail]"), aurora.Magenta(domain), err)
+		return nil, err
+	}
+
+	// check normal config
+	checkedConfig, err := checkConfig(commonConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &server{config: checkedConfig,
+		publicIP: publicIP, store: store}
+
+	// register handler
+	dns.HandleFunc(s.config.domain, s.dnsRequest)
+	return Server(s), nil
+}
+
+func checkConfig(config *CommonConfig) (*CommonConfig, error) {
+	if config == nil {
+		return nil, fmt.Errorf("[err] empty checkConfig")
+	}
+
+	// check a machine state to be associated nameserver.
+	nsrecords, err := net.LookupNS(config.domain)
+	if err != nil {
+		log.Printf("%s %s not found NS Record %v\n", aurora.Red("[fail]"), aurora.Magenta(config.domain), err)
 	} else {
 		for _, ns := range nsrecords {
 			ips, err := net.LookupIP(ns.Host)
@@ -226,33 +253,22 @@ func NewServer(yamlPath string) (Server, error) {
 			} else {
 				check := false
 				for _, ip := range ips {
-					if ip.String() == nameserver {
+					if ip.String() == config.nameserver {
 						check = true
 					}
 				}
 				if check {
-					if nameserver == defaultNameServer {
-						log.Printf("%s matched %s \n", aurora.Green("[success-auto-detect]"), aurora.Magenta(ns.Host))
-						nameserver = ns.Host
+					if config.nameserver == defaultNameServer {
+						log.Printf("%s matched %s \n", aurora.Green("[success-match-with-detect]"), aurora.Magenta(ns.Host))
+						config.nameserver = ns.Host
 					} else {
-						log.Printf("%s matched %s \n", aurora.Green("[success-match]"), aurora.Magenta(nameserver))
+						log.Printf("%s matched %s \n", aurora.Green("[success-match]"), aurora.Magenta(config.nameserver))
 					}
-
 				} else {
-					log.Printf("%s not matched %s \n", aurora.Red("[fail]"), aurora.Magenta(nameserver))
+					log.Printf("%s not matched %s \n", aurora.Red("[fail]"), aurora.Magenta(config.nameserver))
 				}
 			}
 		}
 	}
-
-	store, err := NewStore(awsconfig, gcpconfig)
-	if err != nil {
-		return nil, err
-	}
-	s := &server{domain: domain, port: port, nameserver: nameserver, rname: rname, private: private,
-		publicIP: publicIP, store: store}
-
-	// register handler
-	dns.HandleFunc(s.domain, s.dnsRequest)
-	return Server(s), nil
+	return config, nil
 }

@@ -22,6 +22,14 @@ const (
 	defaultNameServer = "localhost."
 )
 
+type CommonConfig struct {
+	domain     string
+	port       string
+	rname      string
+	nameserver string
+	private    bool
+}
+
 type AwsConfig struct {
 	clients map[string]*ec2.EC2 // map[region]client
 }
@@ -32,68 +40,75 @@ type GcpConfig struct {
 	client    *compute.Service
 }
 
-func ParseConfig(config map[interface{}]interface{}) (domain, nameserver, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
+//domain, nameserver, port, rname string, private bool,
+func ParseConfig(config map[interface{}]interface{}) (commonConfig *CommonConfig, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
 	if config == nil {
 		err = fmt.Errorf("[err] ParseConfig empty params")
 		return
 	}
 
+	commonConfig = &CommonConfig{}
+
 	// get domain
 	if v, ok := config["domain"]; !ok {
+		commonConfig = nil
 		err = fmt.Errorf("[err] ParseConfig empty domain")
+		return
 	} else {
 		rawDomain := strings.TrimSpace(v.(string))
 		if !strings.HasSuffix(rawDomain, ".") {
-			domain = rawDomain + "."
+			commonConfig.domain = rawDomain + "."
 		} else {
-			domain = rawDomain
+			commonConfig.domain = rawDomain
 		}
 	}
 
+	// get nameserver
 	if v, ok := config["nameserver"]; !ok {
-		nameserver = defaultNameServer
+		commonConfig.nameserver = defaultNameServer
 	} else {
 		rawNameserver := strings.TrimSpace(v.(string))
 		if !strings.HasSuffix(rawNameserver, ".") {
-			nameserver = rawNameserver + "."
+			commonConfig.nameserver = rawNameserver + "."
 		} else {
-			nameserver = rawNameserver
+			commonConfig.nameserver = rawNameserver
 		}
 	}
 
 	// get port
 	if v, ok := config["port"]; !ok {
-		port = defaultPort
+		commonConfig.port = defaultPort
 	} else {
 		switch v.(type) {
 		case int, int64:
-			port = fmt.Sprintf("%d", v)
+			commonConfig.port = fmt.Sprintf("%d", v)
 		case string:
-			port = strings.TrimSpace(v.(string))
+			commonConfig.port = strings.TrimSpace(v.(string))
 		}
 	}
 
-	// email
+	// get email
 	if v, ok := config["email"]; !ok {
-		rname = defaultRName
+		commonConfig.rname = defaultRName
 	} else {
-		rname = strings.Replace(v.(string), "@", ".", -1) + "."
+		commonConfig.rname = strings.Replace(v.(string), "@", ".", -1) + "."
 	}
 
 	// private
 	if v, ok := config["private"]; !ok {
-		private = false
+		commonConfig.private = false
 	} else {
 		switch v.(type) {
 		case bool:
-			private = v.(bool)
+			commonConfig.private = v.(bool)
 		case string:
 			e, suberr := strconv.ParseBool(strings.TrimSpace(v.(string)))
 			if suberr != nil {
+				commonConfig = nil
 				err = fmt.Errorf("[err] private field is invalid.")
 				return
 			}
-			private = e
+			commonConfig.private = e
 		}
 	}
 
