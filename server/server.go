@@ -15,40 +15,42 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-	defaultNameServer = "localhost."
-)
-
 type Server interface {
 	Start()
 }
 
 type server struct {
-	domain     string
-	port       string
-	rname      string
-	nameserver string
-	publicIP   string
-	private    bool
-	store      *Store
+	domain   string
+	port     string
+	rname    string
+	host     string
+	publicIP string
+	private  bool
+	store    *Store
 }
 
 func (s *server) Start() {
 	udpServer := &dns.Server{Addr: ":" + s.port, Net: "udp"}
-	go udpServer.ListenAndServe()
+	go func() {
+		if err := udpServer.ListenAndServe(); err != nil {
+			log.Panic(err)
+		}
+	}()
 	tcpServer := &dns.Server{Addr: ":" + s.port, Net: "tcp"}
 	mode := "PUBLIC-IP"
 	if s.private {
 		mode = "PRIVATE-IP"
 	}
-	log.Printf("%s listen(%s) nameserver(%s) domain(%s) Serving %s\n",
+	log.Printf("%s listen(%s) host(%s) domain(%s) Serving %s\n",
 		aurora.Green("[start]"),
 		aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.port)),
-		aurora.Yellow(s.nameserver),
+		aurora.Yellow(s.host),
 		aurora.Cyan(s.domain),
 		aurora.Magenta(mode),
 	)
-	tcpServer.ListenAndServe()
+	if err := tcpServer.ListenAndServe(); err != nil {
+		log.Panic(err)
+	}
 }
 
 func (s *server) Lookup(search string) ([]*Record, error) {
@@ -167,14 +169,14 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 func (s *server) ns() *dns.NS {
 	return &dns.NS{
 		Hdr: dns.RR_Header{Name: s.domain, Rrtype: dns.TypeNS, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:  s.nameserver,
+		Ns:  s.host,
 	}
 }
 
 func (s *server) soa() *dns.SOA {
 	return &dns.SOA{
 		Hdr:     dns.RR_Header{Name: s.domain, Rrtype: dns.TypeSOA, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:      s.nameserver,
+		Ns:      s.host,
 		Mbox:    s.rname,
 		Serial:  uint32(s.store.cacheUpdatedAt.Unix()), // cache updatedAt
 		Refresh: uint32((6 * time.Hour) / time.Second),
@@ -198,7 +200,7 @@ func NewServer(yamlPath string) (Server, error) {
 		return nil, err
 	}
 
-	domain, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
+	domain, host, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -213,15 +215,14 @@ func NewServer(yamlPath string) (Server, error) {
 	}
 
 	// check NS Record
-	nameserver := defaultNameServer
 	nsrecords, err := net.LookupNS(domain)
 	if err != nil {
-		log.Printf("%s %s not found NS Record\n", aurora.Red("[fail]"), aurora.Magenta(domain))
+		log.Printf("%s %s not found NS Record %v\n", aurora.Red("[fail]"), aurora.Magenta(domain), err)
 	} else {
 		for _, ns := range nsrecords {
 			ips, err := net.LookupIP(ns.Host)
 			if err != nil {
-				log.Printf("%s %s not found NS Domain IP\n", aurora.Red("[fail]"), aurora.Magenta(ns.Host))
+				log.Printf("%s %s not found NS Domain IP %v\n", aurora.Red("[fail]"), aurora.Magenta(ns.Host), err)
 			} else {
 				check := false
 				for _, ip := range ips {
@@ -230,8 +231,13 @@ func NewServer(yamlPath string) (Server, error) {
 					}
 				}
 				if check {
-					nameserver = ns.Host
-					log.Printf("%s %s matched %s \n", aurora.Green("[success]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
+					if host == defaultNameServer {
+						log.Printf("%s %s matched %s \n", aurora.Green("[success-auto-detect]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
+						host = ns.Host
+					} else {
+						log.Printf("%s %s matched %s \n", aurora.Green("[match]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
+					}
+
 				} else {
 					log.Printf("%s %s not matched %s \n", aurora.Red("[fail]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
 				}
@@ -243,7 +249,7 @@ func NewServer(yamlPath string) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &server{domain: domain, port: port, nameserver: nameserver, rname: rname, private: private,
+	s := &server{domain: domain, port: port, host: host, rname: rname, private: private,
 		publicIP: publicIP, store: store}
 
 	// register handler

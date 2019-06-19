@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	defaultPort  = "53"
-	defaultRName = "gjbae1212.gmail.com."
+	defaultPort       = "53"
+	defaultRName      = "gjbae1212.gmail.com."
+	defaultNameServer = "localhost."
 )
 
 type AwsConfig struct {
@@ -31,7 +32,7 @@ type GcpConfig struct {
 	client    *compute.Service
 }
 
-func ParseConfig(config map[interface{}]interface{}) (domain, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
+func ParseConfig(config map[interface{}]interface{}) (domain, host, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
 	if config == nil {
 		err = fmt.Errorf("[err] ParseConfig empty params")
 		return
@@ -46,6 +47,17 @@ func ParseConfig(config map[interface{}]interface{}) (domain, port, rname string
 			domain = rawDomain + "."
 		} else {
 			domain = rawDomain
+		}
+	}
+
+	if v, ok := config["host"]; !ok {
+		host = defaultNameServer
+	} else {
+		rawHost := strings.TrimSpace(v.(string))
+		if !strings.HasSuffix(rawHost, ".") {
+			host = rawHost + "."
+		} else {
+			host = rawHost
 		}
 	}
 

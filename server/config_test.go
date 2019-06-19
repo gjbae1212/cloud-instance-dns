@@ -28,7 +28,7 @@ func TestParseConfig(t *testing.T) {
 	}
 
 	for _, t := range tests {
-		do, _, _, _, ac, gc, err := ParseConfig(t.input)
+		do, _, _, _, _, ac, gc, err := ParseConfig(t.input)
 		assert.Equal(t.domain, do)
 		assert.Equal(t.awsConfig, ac)
 		assert.Equal(t.gcpConfig, gc)
@@ -48,9 +48,10 @@ func TestParseConfig(t *testing.T) {
 		assert.NoError(err)
 
 		// both enable
-		do, po, rn, pr, ac, gc, err := ParseConfig(config)
+		do, ho, po, rn, pr, ac, gc, err := ParseConfig(config)
 		assert.NoError(err)
 		assert.NotEqual("", do)
+		assert.NotEqual("", ho)
 		assert.NotEqual("", po)
 		assert.NotEqual("", rn)
 		assert.True(strings.HasSuffix(do, "."))
@@ -64,7 +65,7 @@ func TestParseConfig(t *testing.T) {
 
 		// gcp enable off
 		config["gcp"].(map[interface{}]interface{})["enable"] = "false"
-		do, _, _, _, ac, gc, err = ParseConfig(config)
+		do, _, _, _, _, ac, gc, err = ParseConfig(config)
 		assert.NoError(err)
 		assert.NotEqual("", do)
 		assert.NotEmpty(ac)
@@ -73,7 +74,7 @@ func TestParseConfig(t *testing.T) {
 		// aws enable off
 		config["gcp"].(map[interface{}]interface{})["enable"] = "true"
 		config["aws"].(map[interface{}]interface{})["enable"] = "false"
-		do, _, _, _, ac, gc, err = ParseConfig(config)
+		do, _, _, _, _, ac, gc, err = ParseConfig(config)
 		assert.NoError(err)
 		assert.NotEqual("", do)
 		assert.Empty(ac)

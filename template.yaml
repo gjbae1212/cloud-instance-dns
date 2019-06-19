@@ -1,5 +1,6 @@
 domain: your-name-server-domain (eg) test.example.com .. and so on)
-port: tcp, udp open port number(default->53)
+host: your-machine-hostname or domain (default -> localhost or auto detect value. it should be a hostname that dns will resolve)
+port: tcp, udp open port number(default -> 53)
 email: your-email(responsible name)
 prviate: false or true (if you'd like to answer private-ip -> true or to answer public-ip -> false)
 aws:
