@@ -6,7 +6,7 @@ import (
 
 	"log"
 
-	"github.com/gjbae1212/cloud-name-server/server"
+	"github.com/gjbae1212/cloud-instance-dns/server"
 )
 
 var (

@@ -19,6 +19,16 @@ function setenv
      fi
 }
 
+function build
+{
+    go build
+}
+
+function linux_build
+{
+   GOOS=linux GOARCH=amd64 go build -o dist/cloud-instance-dns
+}
+
 CMD=$1
 shift
 $CMD $*

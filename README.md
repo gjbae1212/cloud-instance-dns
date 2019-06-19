@@ -1,1 +1,1 @@
-# cloud-name-server
+# cloud-instance-dns

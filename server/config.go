@@ -9,12 +9,11 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"google.golang.org/api/compute/v1"
+	compute "google.golang.org/api/compute/v1"
 )
 
 const (
@@ -32,7 +31,7 @@ type GcpConfig struct {
 	client    *compute.Service
 }
 
-func ParseConfig(config map[interface{}]interface{}) (domain, port, rname string, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
+func ParseConfig(config map[interface{}]interface{}) (domain, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
 	if config == nil {
 		err = fmt.Errorf("[err] ParseConfig empty params")
 		return
@@ -62,10 +61,28 @@ func ParseConfig(config map[interface{}]interface{}) (domain, port, rname string
 		}
 	}
 
+	// email
 	if v, ok := config["email"]; !ok {
 		rname = defaultRName
 	} else {
 		rname = strings.Replace(v.(string), "@", ".", -1) + "."
+	}
+
+	// private
+	if v, ok := config["private"]; !ok {
+		private = false
+	} else {
+		switch v.(type) {
+		case bool:
+			private = v.(bool)
+		case string:
+			e, suberr := strconv.ParseBool(strings.TrimSpace(v.(string)))
+			if suberr != nil {
+				err = fmt.Errorf("[err] private field is invalid.")
+				return
+			}
+			private = e
+		}
 	}
 
 	for name, v := range config {

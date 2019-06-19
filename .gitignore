@@ -4,4 +4,5 @@ test
 assets
 coverage.txt
 local_env.sh
-cloud-name-server
+cloud-instance-dns
+dist

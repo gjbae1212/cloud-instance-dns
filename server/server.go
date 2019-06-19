@@ -29,6 +29,7 @@ type server struct {
 	rname      string
 	nameserver string
 	publicIP   string
+	private    bool
 	store      *Store
 }
 
@@ -36,8 +37,17 @@ func (s *server) Start() {
 	udpServer := &dns.Server{Addr: ":" + s.port, Net: "udp"}
 	go udpServer.ListenAndServe()
 	tcpServer := &dns.Server{Addr: ":" + s.port, Net: "tcp"}
-	log.Printf("%s listen(%s) nameserver(%s) domain(%s)\n", aurora.Green("[start]"), aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.port)),
-		aurora.Yellow(s.nameserver), aurora.Cyan(s.domain))
+	mode := "PUBLIC-IP"
+	if s.private {
+		mode = "PRIVATE-IP"
+	}
+	log.Printf("%s listen(%s) nameserver(%s) domain(%s) Serving %s\n",
+		aurora.Green("[start]"),
+		aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.port)),
+		aurora.Yellow(s.nameserver),
+		aurora.Cyan(s.domain),
+		aurora.Magenta(mode),
+	)
 	tcpServer.ListenAndServe()
 }
 
@@ -127,6 +137,10 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 					log.Printf("[err] lookup %+v\n", err)
 				} else {
 					for _, record := range records {
+						ip := record.PublicIP
+						if s.private {
+							ip = record.PrivateIP
+						}
 						m.Answer = append(m.Answer, &dns.A{
 							Hdr: dns.RR_Header{
 								Name:   msg.Name,
@@ -134,7 +148,7 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 								Class:  dns.ClassINET,
 								Ttl:    uint32(record.TTL() / time.Second),
 							},
-							A: record.PublicIP,
+							A: ip,
 						})
 					}
 				}
@@ -184,7 +198,7 @@ func NewServer(yamlPath string) (Server, error) {
 		return nil, err
 	}
 
-	domain, port, rname, awsconfig, gcpconfig, err := ParseConfig(config)
+	domain, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +243,8 @@ func NewServer(yamlPath string) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &server{domain: domain, port: port, nameserver: nameserver, rname: rname, publicIP: publicIP, store: store}
+	s := &server{domain: domain, port: port, nameserver: nameserver, rname: rname, private: private,
+		publicIP: publicIP, store: store}
 
 	// register handler
 	dns.HandleFunc(s.domain, s.dnsRequest)

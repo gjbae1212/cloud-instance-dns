@@ -1,10 +1,9 @@
-module github.com/gjbae1212/cloud-name-server
+module github.com/gjbae1212/cloud-instance-dns
 
 go 1.12
 
 require (
 	github.com/aws/aws-sdk-go v1.19.49
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gjbae1212/go-module v0.4.8
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/miekg/dns v1.1.14
