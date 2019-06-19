@@ -48,10 +48,10 @@ func TestParseConfig(t *testing.T) {
 		assert.NoError(err)
 
 		// both enable
-		do, ho, po, rn, pr, ac, gc, err := ParseConfig(config)
+		do, na, po, rn, pr, ac, gc, err := ParseConfig(config)
 		assert.NoError(err)
 		assert.NotEqual("", do)
-		assert.NotEqual("", ho)
+		assert.NotEqual("", na)
 		assert.NotEqual("", po)
 		assert.NotEqual("", rn)
 		assert.True(strings.HasSuffix(do, "."))

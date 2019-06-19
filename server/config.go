@@ -32,7 +32,7 @@ type GcpConfig struct {
 	client    *compute.Service
 }
 
-func ParseConfig(config map[interface{}]interface{}) (domain, host, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
+func ParseConfig(config map[interface{}]interface{}) (domain, nameserver, port, rname string, private bool, awsConfig *AwsConfig, gcpConfig *GcpConfig, err error) {
 	if config == nil {
 		err = fmt.Errorf("[err] ParseConfig empty params")
 		return
@@ -50,14 +50,14 @@ func ParseConfig(config map[interface{}]interface{}) (domain, host, port, rname 
 		}
 	}
 
-	if v, ok := config["host"]; !ok {
-		host = defaultNameServer
+	if v, ok := config["nameserver"]; !ok {
+		nameserver = defaultNameServer
 	} else {
-		rawHost := strings.TrimSpace(v.(string))
-		if !strings.HasSuffix(rawHost, ".") {
-			host = rawHost + "."
+		rawNameserver := strings.TrimSpace(v.(string))
+		if !strings.HasSuffix(rawNameserver, ".") {
+			nameserver = rawNameserver + "."
 		} else {
-			host = rawHost
+			nameserver = rawNameserver
 		}
 	}
 

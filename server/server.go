@@ -20,13 +20,13 @@ type Server interface {
 }
 
 type server struct {
-	domain   string
-	port     string
-	rname    string
-	host     string
-	publicIP string
-	private  bool
-	store    *Store
+	domain     string
+	port       string
+	rname      string
+	nameserver string
+	publicIP   string
+	private    bool
+	store      *Store
 }
 
 func (s *server) Start() {
@@ -41,10 +41,10 @@ func (s *server) Start() {
 	if s.private {
 		mode = "PRIVATE-IP"
 	}
-	log.Printf("%s listen(%s) host(%s) domain(%s) Serving %s\n",
+	log.Printf("%s listen(%s) nameserver(%s) domain(%s) Serving %s\n",
 		aurora.Green("[start]"),
 		aurora.Blue(fmt.Sprintf("%s:%s", s.publicIP, s.port)),
-		aurora.Yellow(s.host),
+		aurora.Yellow(s.nameserver),
 		aurora.Cyan(s.domain),
 		aurora.Magenta(mode),
 	)
@@ -169,14 +169,14 @@ func (s *server) dnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 func (s *server) ns() *dns.NS {
 	return &dns.NS{
 		Hdr: dns.RR_Header{Name: s.domain, Rrtype: dns.TypeNS, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:  s.host,
+		Ns:  s.nameserver,
 	}
 }
 
 func (s *server) soa() *dns.SOA {
 	return &dns.SOA{
 		Hdr:     dns.RR_Header{Name: s.domain, Rrtype: dns.TypeSOA, Class: dns.ClassINET, Ttl: uint32(TTL / time.Second)},
-		Ns:      s.host,
+		Ns:      s.nameserver,
 		Mbox:    s.rname,
 		Serial:  uint32(s.store.cacheUpdatedAt.Unix()), // cache updatedAt
 		Refresh: uint32((6 * time.Hour) / time.Second),
@@ -200,7 +200,7 @@ func NewServer(yamlPath string) (Server, error) {
 		return nil, err
 	}
 
-	domain, host, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
+	domain, nameserver, port, rname, private, awsconfig, gcpconfig, err := ParseConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -226,20 +226,20 @@ func NewServer(yamlPath string) (Server, error) {
 			} else {
 				check := false
 				for _, ip := range ips {
-					if ip.String() == publicIP {
+					if ip.String() == nameserver {
 						check = true
 					}
 				}
 				if check {
-					if host == defaultNameServer {
-						log.Printf("%s %s matched %s \n", aurora.Green("[success-auto-detect]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
-						host = ns.Host
+					if nameserver == defaultNameServer {
+						log.Printf("%s matched %s \n", aurora.Green("[success-auto-detect]"), aurora.Magenta(ns.Host))
+						nameserver = ns.Host
 					} else {
-						log.Printf("%s %s matched %s \n", aurora.Green("[match]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
+						log.Printf("%s matched %s \n", aurora.Green("[success-match]"), aurora.Magenta(nameserver))
 					}
 
 				} else {
-					log.Printf("%s %s not matched %s \n", aurora.Red("[fail]"), aurora.Magenta(domain), aurora.Magenta(publicIP))
+					log.Printf("%s not matched %s \n", aurora.Red("[fail]"), aurora.Magenta(nameserver))
 				}
 			}
 		}
@@ -249,7 +249,7 @@ func NewServer(yamlPath string) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &server{domain: domain, port: port, host: host, rname: rname, private: private,
+	s := &server{domain: domain, port: port, nameserver: nameserver, rname: rname, private: private,
 		publicIP: publicIP, store: store}
 
 	// register handler
