@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	"strconv"
 	"strings"
@@ -13,6 +14,10 @@ import (
 	goip "github.com/gjbae1212/go-module/ip"
 	"github.com/logrusorgru/aurora"
 	"github.com/miekg/dns"
+)
+
+const (
+	dnsRR = "rr"
 )
 
 type Server interface {
@@ -63,6 +68,20 @@ func (s *server) Lookup(search string) ([]*Record, error) {
 	if ix, err := strconv.Atoi(prefix); err == nil {
 		num = ix
 	}
+
+	// if a suffix means round-robin, must be responsibility to return shuffle result
+	if suffix == dnsRR {
+		records, err := s.store.Lookup(strings.Join(seps[0:(len(seps)-1)], "."))
+		if err != nil {
+			return nil, err
+		}
+		rand.Seed(time.Now().UnixNano())
+		dummy := make([]*Record, len(records))
+		copy(dummy, records)
+		rand.Shuffle(len(dummy), func(i, j int) { dummy[i], dummy[j] = dummy[j], dummy[i] })
+		return dummy, nil
+	}
+
 	if suffix == "aws" {
 		checkVendor = AWS
 	} else if suffix == "gcp" {
