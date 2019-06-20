@@ -2,8 +2,10 @@ package server
 
 import (
 	"fmt"
+	"hash/crc32"
 	"log"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -143,6 +145,14 @@ func (s *Store) renewal() error {
 			}
 		}
 	}
+
+	// if array is not changed, array of order same as prev order array is returned
+	for _, v := range table {
+		sort.Slice(v, func(i, j int) bool {
+			return crc32.ChecksumIEEE(v[i].PublicIP) < crc32.ChecksumIEEE(v[j].PublicIP)
+		})
+	}
+
 	s.cache.Store(CacheName, table)
 	s.cacheUpdatedAt = time.Now()
 	log.Printf("%s[%d] cache table %s\n", aurora.Yellow("[update]"), count, time.Now().String())
