@@ -1,19 +1,19 @@
-domain: your-name-server-domain (eg) localhost, test.example.com .. and so on)
-nameserver: your-machine hostname or public domain<not ip>(default -> localhost or auto detect value. it should be a value that dns will resolve)
-port: tcp, udp open port number(default -> 53)
-email: your-email(responsible name)
-prviate: false or true (if you'd like to answer private-ip -> true or to answer public-ip -> false)
+domain: your-name-server-domain, ex) localhost, dns.example.com, ...
+nameserver: your-machine hostname or public domain(not ip), default) localhost, ex) ec2.compute.amazon.com, ...
+port: port-number, ex) 53, ...
+email: your-email, ex) gjbae1212@gmail.com ...
+prviate: false or true, ex) if you'd like to answer private-ip -> true or public-ip -> false
 aws:
-  enable: true or false
+  enable: true or false, ex) if your'd use to aws -> true, not -> false
   access_key: your-aws-access-key
   secret_access_key: your-aws-secret-access-key
   regions:
     - your-aws-region-1
     - your-aws-region-2
 gcp:
-  enable: true or false
+  enable: true or false, ex) if your'd use to gcp -> true, not -> false
   project_id: your-gcp-project-id
   zones:
     - your-gcp-zone-1
     - your-gcp-zone-2
-  jwt: your-gcp-json-web-token-string
+  jwt: your-gcp-jwt-string
