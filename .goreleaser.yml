@@ -41,7 +41,7 @@ brews:
 - name: cloud-instance-dns
   github:
     owner: gjbae1212
-    name: cloud-instance-dns
+    name: homebrew-cloud-instance-dns
   commit_author:
     name: gjbae1212
     email: gjbae1212@gmail.com
