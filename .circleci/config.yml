@@ -20,6 +20,3 @@ jobs:
           environment:
             GO111MODULE: "on"
           command: bash local.sh test
-      - run:
-          name: release
-          command: bash local.sh release
