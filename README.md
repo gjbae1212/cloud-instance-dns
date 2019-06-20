@@ -67,24 +67,24 @@ $ brew install cloud-instance-dns
 If you would be setup to **cloud-instance-dns**, Be several attention. 
  
 ### AWS 
-- aws.enable field of config.yaml must enabled be true.
+- aws.enable of config.yaml should be true when you'd like to use.
 - a aws_key must have permission to access ec2(ec2:DescribeInstances).
 - ingress port running **cloud-instance-dns** must open(port of config.yaml).
 
 ### GCP
-- gcp.enable field of config.yaml must enabled be true.
+- gcp.enable of config.yaml should be true when you'd like to use.
 - a gcp-jwt must have permission to access compute-engine(Compute Viewer).
 - ingress port running **cloud-instance-dns** must open(port of config.yaml).
 
 ### Configure NS Record
 If your **cloud-instance-dns** will register global DNS, you must input NS record from your domain.   
-Assume having `example.com` and you are running **cloud-instance-dns** on instance(assume public domain `ec2-1.1.1.1.region.compute.amazonaws.com`<must not IP>).  
+Assume having `example.com` and you are running **cloud-instance-dns** on instance(assume public domain `ec2-1.1.1.1.region.compute.amazonaws.com`<must not be a IP>).  
 And then you will make `hello.example.com.` DNS.
 ```bash
 # your-name-server-domain(domain of your config.yaml)  #TTL          #value(nameserver of your config.yaml)   
 hello.example.com.                                     300   IN  NS  ec2-1.1.1.1.region.compute.amazonaws.com 
 ``` 
-NS record value must not ip. It is public domain or hostname<could dns resolve>. 
+NS record value must not be a IP. It is public domain or hostname<could dns resolve>. 
 
 ### Test
 - dig (name).hello.example.com @localhost  -->  using localhost dns.
