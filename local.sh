@@ -31,6 +31,7 @@ function linux_build
 
 function release
 {
+  # export GITHUB_TOKEN=blahblah
   # before --> git tag -a 'version' -m ''
   goreleaser release --rm-dist
 }
