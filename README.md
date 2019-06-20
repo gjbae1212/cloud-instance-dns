@@ -77,7 +77,7 @@ If you would be setup to **cloud-instance-dns**, Be several attention.
 - ingress port running **cloud-instance-dns** must open(port of config.yaml).
 
 ### Configure NS Record
-If Your **cloud-instance-dns** will register global DNS, you must input NS record from your domain.   
+If your **cloud-instance-dns** will register global DNS, you must input NS record from your domain.   
 Assume having `example.com` and you are running **cloud-instance-dns** on instance(assume public domain `ec2-1.1.1.1.region.compute.amazonaws.com`<must not IP>).  
 And then you will make `hello.example.com.` DNS.
 ```bash
