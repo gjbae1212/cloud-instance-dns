@@ -43,13 +43,13 @@ gcp:
 ### usage
 You will search to dns records following rule patterns below, Assume having `hello.example.com` dns
 
-- `(name or instacne-id).hello.example.com` will return all instances matching name or instance-id regardless cloud infra.  
-- `(number).(name or instacne-id).hello.example.com` will return a instance matching (name or instance-id) and number.
-- `(name or instacne-id).aws.hello.example.com` will return instances matching (name or instance-id) at aws.
-- `(number).(name or instacne-id).aws.hello.example.com` will return a instance matching (name or instance-id) and number at aws.
-- `(name or instacne-id).gcp.hello.example.com` will return instances matching (name or instance-id) at gcp.
-- `(number).(name or instacne-id).gcp.hello.example.com` will return a instance matching (name or instance-id) and number at gcp.
-- `(name or instacne-id).rr.hello.example.com` will return instances matching (name or instance-id) with dns round robin.
+- `(name or instacne-id).hello.example.com` will return instances matching name regardless cloud infra.  
+- `(num).(name or instacne-id).hello.example.com` will return a instance matching name and number.
+- `(name or instacne-id).aws.hello.example.com` will return instances matching name at aws.
+- `(num).(name or instacne-id).aws.hello.example.com` will return a instance matching name and number at aws.
+- `(name or instacne-id).gcp.hello.example.com` will return instances matching name at gcp.
+- `(num).(name or instacne-id).gcp.hello.example.com` will return a instance matching name and number at gcp.
+- `(name or instacne-id).rr.hello.example.com` will return instances matching name with dns round robin.
 
 ### build
 ```bash
@@ -65,7 +65,7 @@ $ brew install cloud-instance-dns
 ```
 
 ## Explanation
-If You would be setup to **cloud-instance-dns**, Be several attention. 
+If you would be setup to **cloud-instance-dns**, Be several attention. 
  
 ### AWS 
 - aws.enable field of config.yaml must enabled be true.
@@ -87,10 +87,7 @@ hello.example.com.                                     300   IN  NS  ec2-1.1.1.1
 ``` 
 NS record value must not ip. It is public domain or hostname<could dns resolve>. 
 
-#### Test
+### Test
 - dig (name).hello.example.com @localhost  -->  using localhost dns.
 - dig (name).hello.example.com @ec2-1.1.1.1.region.compute.amazonaws.com --> check A record using your public dns. 
 - dig NS hello.example.com   --> check NS record using your public dns.
-
-## LICENSE
-MIT
