@@ -5,7 +5,6 @@
 <a href="https://hits.seeyoufarm.com"/><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fgjbae1212%2Fcloud-instance-dns"/></a>
 <a href="/LICENSE"><img src="https://img.shields.io/badge/license-MIT-GREEN.svg" alt="license" /></a>
 <a href="https://goreportcard.com/report/github.com/gjbae1212/cloud-instance-dns"><img src="https://goreportcard.com/badge/github.com/gjbae1212/cloud-instance-dns" alt="Go Report Card" /></a> 
-<a href="https://codecov.io/gh/gjbae1212/cloud-instance-dns"><img src="https://codecov.io/gh/gjbae1212/cloud-instance-dns/branch/master/graph/badge.svg" /></a>
 </p>
 
 ## OVERVIEW

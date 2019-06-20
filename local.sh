@@ -29,6 +29,12 @@ function linux_build
    GOOS=linux GOARCH=amd64 go build -o dist/cloud-instance-dns
 }
 
+function release
+{
+  # before --> git tag -a 'version' -m ''
+  goreleaser release --rm-dist
+}
+
 CMD=$1
 shift
 $CMD $*
