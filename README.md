@@ -13,10 +13,12 @@
 In addition it could be searching private or public ip. 
 
 ## HOW TO USE
+### quickstart
 ```bash
-$ cloud-instance-dns -c your-config-yaml-path
+$ bash local.sh build
+$ cloud-instance-dns -c your_config_yaml_path
 ```
-### config(yaml)
+### config(yaml) spec
 ```yaml
 domain: your-name-server-domain, ex) localhost, dns.example.com, ...  
 nameserver: your-machine hostname or public domain(not ip), default) localhost, ex) ec2.compute.amazon.com, ...
