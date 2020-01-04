@@ -8,38 +8,108 @@
 </p>
 
 ## OVERVIEW
-**cloud-instance-dns** is DNS server that will look up public or private ip on aws ec2 or gcp compute-engine.  
-**cloud-instance-dns** is supporting to search multi regions(zones) instances on clouds(aws,gcp).   
+**cloud-instance-dns** is DNS server that will look up public or private ip on AWS ec2 or GCP compute-engine.  
+**cloud-instance-dns** is supporting to search multi regions(zones) instances on clouds(AWS,GCP).   
 In addition it could be searching private or public ip. 
 
-## HOW TO USE
+## Getting Started
 ### quickstart
 ```bash
 $ bash local.sh build
-$ cloud-instance-dns -c your_config_yaml_path
+$ cloud-instance-dns -c your-config.yaml
 ```
-### config(yaml) spec
+
+### config(yaml) 
+
+------
+
+#### spec
 ```yaml
-domain: your-name-server-domain, ex) localhost, dns.example.com, ...  
-nameserver: your-machine hostname or public domain(not ip), default) localhost, ex) ec2.compute.amazon.com, ...
-port: port-number, ex) 53, ...
-email: your-email, ex) gjbae1212@gmail.com ...
-prviate: false or true, ex) if you'd like to answer private-ip -> true or public-ip -> false
+domain: DNS domain # EX) localhost, dns.example.com, hello.example.com ...  
+nameserver: public domain for server running on`cloud-instance-dns` # server public domain(never ip) running `cloud-instance-dns`
+port: port number
+email: your email
+prviate: false or true # if you'd like to answer private-ip -> true, but public-ip -> false
 aws:
-  enable: true or false, ex) if your'd use to aws -> true, not -> false
+  enable: true or false # if your'd use to aws -> true, but not -> false
   access_key: your-aws-access-key
   secret_access_key: your-aws-secret-access-key
   regions:
     - your-aws-region-1
     - your-aws-region-2
 gcp:
-  enable: true or false, ex) if your'd use to gcp -> true, not -> false
+  enable: true or false # if your'd use to gcp -> true, but not -> false
   project_id: your-gcp-project-id
   zones:
     - your-gcp-zone-1
     - your-gcp-zone-2
   jwt: your-gcp-jwt-string
 ```
+------
+
+#### config example
+
+- using AWS and GCP
+```yaml
+domain: hello.example.com  
+nameserver: ec2-1.1.1.1.region.compute.amazonaws.com
+port: 53
+email: gjbae1212@gmail.com
+prviate: true
+aws:
+  enable: true
+  access_key: blahblah
+  secret_access_key: blahblah
+  regions:
+    - ap-northeast-1
+    - ap-northeast-2    
+gcp:
+  enable: true
+  project_id: gcp-project-id
+  zones:    
+    - asia-northeast1-a
+    - asia-northeast1-b    
+  jwt: '{
+          blahblah
+        }'
+```
+- only AWS
+```
+domain: hello.example.com  
+nameserver: ec2-1.1.1.1.region.compute.amazonaws.com
+port: 53
+email: gjbae1212@gmail.com
+prviate: true
+aws:
+  enable: true
+  access_key: blahblah
+  secret_access_key: blahblah
+  regions:
+    - ap-northeast-1
+    - ap-northeast-2    
+gcp:
+  enable: false
+```
+-  only GCP
+```
+domain: hello.example.com  
+nameserver: ec2-1.1.1.1.region.compute.amazonaws.com
+port: 53
+email: gjbae1212@gmail.com
+prviate: true
+aws:
+  enable: false  
+gcp:
+  enable: true
+  project_id: gcp-project-id
+  zones:    
+    - asia-northeast1-a
+    - asia-northeast1-b    
+  jwt: '{
+          blahblah
+        }'
+```
+------
 
 ### usage
 You will search to dns records following rule patterns below, Assume having `hello.example.com` dns
@@ -52,13 +122,16 @@ You will search to dns records following rule patterns below, Assume having `hel
 - `(num).(name or instacne-id).gcp.hello.example.com` will return a instance matching name and number at gcp.
 - `(name or instacne-id).rr.hello.example.com` will return instances matching name with dns round robin.
 
-### build
+### install
 ```bash
 # your-machine(mac ... and so on)
 $ bash local.sh build
 
 # linux
 $ bash local.sh linux_build
+
+# download
+go to `https://github.com/gjbae1212/cloud-instance-dns/releases`
 
 # homebrew
 $ brew tap gjbae1212/cloud-instance-dns
@@ -80,10 +153,10 @@ If you would be setup to **cloud-instance-dns**, Be several attention.
 
 ### Configure NS Record
 If your **cloud-instance-dns** will register global DNS, you must input NS record from your domain.   
-Assume having `example.com` and you are running **cloud-instance-dns** on instance(assume public domain `ec2-1.1.1.1.region.compute.amazonaws.com`<must not be a IP>).  
+Assume having `example.com` domain and you are running **cloud-instance-dns** on instance(assume public domain `ec2-1.1.1.1.region.compute.amazonaws.com`<must not be a IP>).  
 And then you will make `hello.example.com.` DNS.
 ```bash
-# your-name-server-domain(domain of your config.yaml)  #TTL          #value(nameserver of your config.yaml)   
+# DNS Domain(domain in your yaml)                      #TTL          # public hostname(nameserver in your yaml)    
 hello.example.com.                                     300   IN  NS  ec2-1.1.1.1.region.compute.amazonaws.com 
 ``` 
 NS record value must not be a IP. It is public domain or hostname<could dns resolve>. 
