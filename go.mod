@@ -1,6 +1,6 @@
 module github.com/gjbae1212/cloud-instance-dns
 
-go 1.12
+go 1.14
 
 require (
 	github.com/aws/aws-sdk-go v1.19.49
