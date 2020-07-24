@@ -15,8 +15,12 @@ In addition it could be searching private or public ip.
 ## Getting Started
 ### quickstart
 ```bash
-$ bash local.sh build
-$ cloud-instance-dns -c your-config.yaml
+
+# Mac
+$ ./dist/dns-darwin -c config.yaml
+
+# Linux
+$ ./dist/dns-linux -c config.yaml
 ```
 
 ### config(yaml) 
@@ -124,7 +128,7 @@ You will search to dns records following rule patterns below, Assume having `hel
 
 ### install
 ```bash
-# your-machine(mac ... and so on)
+# your-machine
 $ bash local.sh build
 
 # linux

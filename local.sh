@@ -21,18 +21,21 @@ function setenv
 
 function build
 {
-    go build
+    cd $CURRENT/cmd/dns
+    go build -trimpath -ldflags='-s -w' -o $CURRENT/dist/dns-darwin
 }
 
 function linux_build
 {
-   GOOS=linux GOARCH=amd64 go build -o dist/cloud-instance-dns
+   cd $CURRENT/cmd/dns
+   GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o $CURRENT/dist/dns-linux
 }
 
 function release
 {
   # export GITHUB_TOKEN=blahblah
   # before --> git tag -a 'version' -m ''
+  cd $CURRENT/cmd/dns
   goreleaser release --rm-dist
 }
 

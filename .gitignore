@@ -4,5 +4,4 @@ test
 assets
 coverage.txt
 local_env.sh
-cloud-instance-dns
-dist
+cmd/dns/dist
